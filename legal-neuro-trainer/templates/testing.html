@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-card">
+    <h2>🧪 Выберите категорию для тестирования</h2>
+    
+    <div class="menu-grid">
+        {% for category in categories %}
+        <div class="menu-card" onclick="location.href='{{ url_for('test', category=category) }}'">
+            <h3>{{ category }}</h3>
+            <p>Тестирование по категории: {{ category }}</p>
+            <button class="btn btn-success">Начать тест</button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <button class="btn btn-primary" onclick="location.href='{{ url_for('index') }}'">← На главную</button>
+</div>
+{% endblock %}

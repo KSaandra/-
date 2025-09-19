@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-card test-container">
+    <div class="test-progress">
+        Вопрос {{ current }} из {{ total }} | Категория: {{ category }}
+    </div>
+    
+    <div class="test-word" id="current-word">Загрузка...</div>
+    
+    <input type="text" class="form-control answer-input" id="answer-input" 
+           placeholder="Введите перевод..." autocomplete="off">
+    
+    <div style="margin-top: 20px;">
+        <button class="btn btn-primary" onclick="checkAnswer()">Проверить</button>
+        <button class="btn btn-danger" onclick="location.href='{{ url_for('testing') }}'">Отмена</button>
+    </div>
+    
+    <div id="result-message" style="margin-top: 20px; font-size: 1.2em;"></div>
+</div>
+
+<script>
+let words = {{ session['test_words'] | tojson }};
+let currentIndex = 0;
+let score = 0;
+
+function showNextWord() {
+    if (currentIndex >= words.length) {
+        finishTest();
+        return;
+    }
+    
+    const [english, russian] = words[currentIndex];
+    document.getElementById('current-word').textContent = english;
+    document.getElementById('answer-input').value = '';
+    document.getElementById('result-message').innerHTML = '';
+    document.getElementById('answer-input').focus();
+}
+
+async function checkAnswer() {
+    const answer = document.getElementById('answer-input').value.trim().toLowerCase();
+    if (!answer) return;
+    
+    const response = await fetch('/check_answer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answer: answer })
+    });
+    
+    const result = await response.json();
+    
+    if (result.finished) {
+        finishTest();
+        return;
+    }
+    
+    if (result.correct) {
+        document.getElementById('result-message').innerHTML = 
+            '<span style="color: green;">✓ Правильно!</span>';
+        score++;
+    } else {
+        document.getElementById('result-message').innerHTML = 
+            `<span style="color: red;">✗ Неправильно. Правильно: ${result.correct_answer}</span>`;
+    }
+    
+    setTimeout(() => {
+        currentIndex++;
+        showNextWord();
+    }, 1500);
+}
+
+function finishTest() {
+    window.location.href = '/results';
+}
+
+// Начинаем тест при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    showNextWord();
+    document.getElementById('answer-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    });
+});
+</script>
+{% endblock %}
